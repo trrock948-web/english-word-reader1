@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英文單字朗讀練習</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #f5f6fa; color: #1f2937;
+    font-family: Arial, "Noto Sans TC", sans-serif;
+  }
+  .wrap { max-width: 900px; margin: 32px auto; padding: 0 18px 48px; }
+  .panel {
+    background: white; border-radius: 18px; padding: 24px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.08);
+  }
+  h1 { margin: 0 0 8px; font-size: 30px; }
+  .sub { color: #64748b; margin-bottom: 20px; }
+  .controls {
+    position: sticky; top: 0; z-index: 5;
+    background: white; padding: 14px 0;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  select, input {
+    padding: 9px 10px; font-size: 16px; border: 1px solid #cbd5e1;
+    border-radius: 9px;
+  }
+  input[type=number] { width: 78px; }
+  button {
+    border: 0; border-radius: 10px; padding: 10px 15px;
+    font-size: 15px; cursor: pointer; background: #111827; color: white;
+  }
+  button.secondary { background: #475569; }
+  button.light { background: #e2e8f0; color: #111827; }
+  .status {
+    margin: 14px 0; padding: 11px 13px; background: #f1f5f9;
+    border-radius: 10px; color: #334155;
+  }
+  .list { display: grid; gap: 8px; }
+  .item {
+    border: 1px solid #e2e8f0; border-radius: 12px; padding: 13px 15px;
+    display: grid; grid-template-columns: 55px 1fr 1.4fr auto;
+    align-items: center; gap: 10px;
+  }
+  .num { color: #64748b; font-weight: 700; }
+  .word { font-size: 22px; font-weight: 700; }
+  .zh { font-size: 16px; color: #475569; }
+  .item.playing { outline: 3px solid #94a3b8; background: #f8fafc; }
+  @media (max-width: 650px) {
+    .item { grid-template-columns: 45px 1fr auto; }
+    .zh { grid-column: 2 / 4; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>英文單字朗讀練習</h1>
+    <div class="sub">固定單字列表｜不需輸入單字</div>
+
+    <div class="controls">
+      <label>從第
+        <input id="startIndex" type="number" min="1" max="29" value="1">
+        個開始
+      </label>
+
+      <label>速度
+        <select id="rate">
+          <option value="0.25" selected>🐢 超級慢（0.25x）</option>
+          <option value="0.6">很慢</option>
+          <option value="0.75">慢</option>
+          <option value="0.9">正常偏慢</option>
+          <option value="1">正常</option>
+        </select>
+      </label>
+
+      <button onclick="playFromStart()">▶ 開始播放</button>
+      <button class="secondary" onclick="stopSpeaking()">⏹ 停止</button>
+      <button class="light" onclick="restart()">↺ 從第 1 個</button>
+    </div>
+
+    <div id="status" class="status">共 29 個單字，尚未播放。</div>
+    <div id="list" class="list"></div>
+  </div>
+</div>
+
+<script>
+const WORDS = [
+  {word: "Homework", zh: "家事；家庭作業"},
+  {word: "Lesson", zh: "課業；教訓"},
+  {word: "Marker", zh: "麥克筆"},
+  {word: "Picture", zh: "照片；圖畫"},
+  {word: "Problem", zh: "問題；難題"},
+  {word: "Question", zh: "問題；提問"},
+  {word: "Ruler", zh: "尺"},
+  {word: "Screen", zh: "螢幕"},
+  {word: "Story", zh: "故事"},
+  {word: "Student", zh: "學生"},
+  {word: "Desk", zh: "桌子（有抽屜的書桌）"},
+  {word: "Eraser", zh: "橡皮擦"},
+  {word: "Example", zh: "例子；範例"},
+  {word: "Grade", zh: "年級；成績"},
+  {word: "Classmate", zh: "同學"},
+  {word: "Cousin", zh: "堂表兄弟姊妹"},
+  {word: "Daughter", zh: "女兒"},
+  {word: "Family", zh: "家庭；家人"},
+  {word: "Friend", zh: "朋友"},
+  {word: "Housewife", zh: "家庭主婦"},
+  {word: "Husband", zh: "丈夫"},
+  {word: "Person", zh: "人"},
+  {word: "Son", zh: "兒子"},
+  {word: "Teacher", zh: "老師"},
+  {word: "Uncle", zh: "叔伯；舅舅"},
+  {word: "Aunt", zh: "阿姨；姑姑"},
+  {word: "Wife", zh: "妻子"},
+  {word: "Writer", zh: "作家"},
+  {word: "Singer", zh: "歌手"}
+];
+
+let stopRequested = false;
+let currentIndex = -1;
+
+function renderList() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  WORDS.forEach((item, i) => {
+    const row = document.createElement("div");
+    row.className = "item";
+    row.id = `item-${i}`;
+    row.innerHTML = `
+      <div class="num">${i + 1}</div>
+      <div class="word">${item.word}</div>
+      <div class="zh">${item.zh}</div>
+      <button onclick="playOne(${i})">🔊</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function getVoice() {
+  const voices = speechSynthesis.getVoices();
+  return voices.find(v => /^en-US/i.test(v.lang))
+      || voices.find(v => /^en-GB/i.test(v.lang))
+      || voices.find(v => /^en/i.test(v.lang))
+      || null;
+}
+
+function speak(text) {
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance(text);
+    const v = getVoice();
+    if (v) u.voice = v;
+    u.lang = v ? v.lang : "en-US";
+    u.rate = parseFloat(document.getElementById("rate").value);
+    u.pitch = 1;
+    u.onend = resolve;
+    u.onerror = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+
+function clearHighlight() {
+  document.querySelectorAll(".item").forEach(x => x.classList.remove("playing"));
+}
+
+function highlight(i) {
+  clearHighlight();
+  const el = document.getElementById(`item-${i}`);
+  if (el) {
+    el.classList.add("playing");
+    el.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+}
+
+async function playOne(i) {
+  stopRequested = false;
+  speechSynthesis.cancel();
+  await new Promise(r => setTimeout(r, 70));
+  currentIndex = i;
+  highlight(i);
+  document.getElementById("startIndex").value = i + 1;
+  document.getElementById("status").textContent =
+    `正在播放第 ${i + 1} 個：${WORDS[i].word}`;
+  await speak(WORDS[i].word);
+  clearHighlight();
+  document.getElementById("status").textContent =
+    `已播放第 ${i + 1} 個：${WORDS[i].word}`;
+}
+
+async function playFromStart() {
+  let start = parseInt(document.getElementById("startIndex").value || "1", 10);
+  if (start < 1) start = 1;
+  if (start > WORDS.length) start = WORDS.length;
+
+  stopRequested = false;
+  speechSynthesis.cancel();
+  await new Promise(r => setTimeout(r, 80));
+
+  for (let i = start - 1; i < WORDS.length; i++) {
+    if (stopRequested) break;
+    currentIndex = i;
+    document.getElementById("startIndex").value = i + 1;
+    highlight(i);
+    document.getElementById("status").textContent =
+      `正在播放第 ${i + 1} / ${WORDS.length} 個：${WORDS[i].word}`;
+
+    await speak(WORDS[i].word);
+
+    if (stopRequested) break;
+    await new Promise(r => setTimeout(r, 450));
+  }
+
+  clearHighlight();
+  if (stopRequested) {
+    document.getElementById("status").textContent =
+      `已停止在第 ${currentIndex + 1} 個：${WORDS[currentIndex].word}`;
+  } else {
+    document.getElementById("status").textContent = "全部播放完成。";
+  }
+}
+
+function stopSpeaking() {
+  stopRequested = true;
+  speechSynthesis.cancel();
+  clearHighlight();
+  if (currentIndex >= 0) {
+    document.getElementById("startIndex").value = currentIndex + 1;
+  }
+}
+
+function restart() {
+  stopSpeaking();
+  currentIndex = -1;
+  document.getElementById("startIndex").value = 1;
+  document.getElementById("status").textContent =
+    `共 ${WORDS.length} 個單字，已回到第 1 個。`;
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+renderList();
+speechSynthesis.onvoiceschanged = () => {};
+</script>
+</body>
+</html>
