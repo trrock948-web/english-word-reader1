@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英文單字朗讀練習</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f6fa;color:#1f2937;font-family:Arial,"Noto Sans TC",sans-serif}
+.wrap{max-width:940px;margin:30px auto;padding:0 18px 48px}
+.panel{background:#fff;border-radius:18px;padding:24px;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+h1{margin:0 0 8px;font-size:30px}.sub{color:#64748b;margin-bottom:18px}
+.controls{position:sticky;top:0;z-index:5;background:#fff;padding:14px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb}
+select,input{padding:9px 10px;font-size:16px;border:1px solid #cbd5e1;border-radius:9px}
+input[type=number]{width:94px}
+button{border:0;border-radius:10px;padding:10px 15px;font-size:15px;cursor:pointer;background:#111827;color:#fff}
+button.secondary{background:#475569}button.light{background:#e2e8f0;color:#111827}
+.status{margin:14px 0;padding:11px 13px;background:#f1f5f9;border-radius:10px;color:#334155}
+.section{margin:24px 0 10px;font-size:20px;font-weight:700;color:#334155}
+.item{border:1px solid #e2e8f0;border-radius:12px;padding:13px 15px;display:grid;grid-template-columns:70px 1.2fr 1.4fr auto;align-items:center;gap:10px;margin-bottom:8px}
+.num{color:#64748b;font-weight:700}.word{font-size:21px;font-weight:700}.zh{font-size:16px;color:#475569}
+.item.playing{outline:3px solid #94a3b8;background:#f8fafc}
+.gap-note{margin:24px 0;padding:14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;color:#9a3412}
+@media(max-width:650px){.item{grid-template-columns:58px 1fr auto}.zh{grid-column:2/4}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="panel">
+<h1>英文單字朗讀練習</h1>
+<div class="sub">目前收錄：301–500、701–800｜共 300 個單字</div>
+
+<div class="controls">
+<label>從第 <input id="startNum" type="number" min="301" max="800" value="301"> 個開始</label>
+<label>速度 <select id="rate">
+<option value="0.25" selected>🐢 超級慢（0.25x）</option>
+<option value="0.6">很慢（0.6x）</option>
+<option value="0.75">慢（0.75x）</option>
+<option value="0.9">正常偏慢（0.9x）</option>
+<option value="1">正常（1.0x）</option>
+</select></label>
+<button onclick="playFromStart()">▶ 開始播放</button>
+<button class="secondary" onclick="stopSpeaking()">⏹ 停止</button>
+<button class="light" onclick="restart()">↺ 回到 301</button>
+</div>
+
+<div id="status" class="status">共 300 個單字，尚未播放。</div>
+<div id="content"></div>
+</div></div>
+
+<script>
+const WORDS = [{"num": 301, "word": "bathtub", "zh": "浴缸"}, {"num": 302, "word": "bathroom", "zh": "浴室"}, {"num": 303, "word": "bedroom", "zh": "臥房"}, {"num": 304, "word": "dining room", "zh": "餐廳"}, {"num": 305, "word": "living room", "zh": "客廳"}, {"num": 306, "word": "room", "zh": "房間"}, {"num": 307, "word": "kitchen", "zh": "廚房"}, {"num": 308, "word": "shower", "zh": "蓮蓬頭"}, {"num": 309, "word": "sofa", "zh": "沙發"}, {"num": 310, "word": "key", "zh": "鑰匙"}, {"num": 311, "word": "mat", "zh": "腳踏墊"}, {"num": 312, "word": "lamp", "zh": "檯燈"}, {"num": 313, "word": "radio", "zh": "收音機"}, {"num": 314, "word": "carpet", "zh": "地毯"}, {"num": 315, "word": "curtain", "zh": "窗簾"}, {"num": 316, "word": "cupboard", "zh": "櫥櫃"}, {"num": 317, "word": "chalk", "zh": "粉筆"}, {"num": 318, "word": "crayon", "zh": "蠟筆"}, {"num": 319, "word": "drawer", "zh": "抽屜"}, {"num": 320, "word": "glue", "zh": "膠水"}, {"num": 321, "word": "paper", "zh": "紙"}, {"num": 322, "word": "paste", "zh": "白膠"}, {"num": 323, "word": "picture", "zh": "圖片"}, {"num": 324, "word": "game", "zh": "遊戲"}, {"num": 325, "word": "music", "zh": "音樂"}, {"num": 326, "word": "sport", "zh": "運動"}, {"num": 327, "word": "cook", "zh": "廚師"}, {"num": 328, "word": "doctor", "zh": "醫生"}, {"num": 329, "word": "driver", "zh": "駕駛員"}, {"num": 330, "word": "farmer", "zh": "農夫"}, {"num": 331, "word": "firefighter", "zh": "消防員"}, {"num": 332, "word": "fisherman", "zh": "漁夫"}, {"num": 333, "word": "homemaker", "zh": "主婦"}, {"num": 334, "word": "mail carrier", "zh": "郵差"}, {"num": 335, "word": "nurse", "zh": "護士"}, {"num": 336, "word": "pilot", "zh": "機師"}, {"num": 337, "word": "policeman", "zh": "警員"}, {"num": 338, "word": "police officer", "zh": "警官"}, {"num": 339, "word": "salesperson", "zh": "銷售員"}, {"num": 340, "word": "singer", "zh": "歌手"}, {"num": 341, "word": "worker", "zh": "工人"}, {"num": 342, "word": "writer", "zh": "作家"}, {"num": 343, "word": "aunt", "zh": "姨／姑／嬸"}, {"num": 344, "word": "daughter", "zh": "女兒"}, {"num": 345, "word": "grandpa", "zh": "祖父／外公"}, {"num": 346, "word": "grandma", "zh": "祖母／外婆"}, {"num": 347, "word": "husband", "zh": "丈夫"}, {"num": 348, "word": "wife", "zh": "妻子"}, {"num": 349, "word": "son", "zh": "兒子"}, {"num": 350, "word": "uncle", "zh": "叔／伯／舅舅"}, {"num": 351, "word": "twenty", "zh": "二十"}, {"num": 352, "word": "thirty", "zh": "三十"}, {"num": 353, "word": "forty", "zh": "四十"}, {"num": 354, "word": "fifty", "zh": "五十"}, {"num": 355, "word": "sixty", "zh": "六十"}, {"num": 356, "word": "seventy", "zh": "七十"}, {"num": 357, "word": "eighty", "zh": "八十"}, {"num": 358, "word": "ninety", "zh": "九十"}, {"num": 359, "word": "one hundred", "zh": "一百"}, {"num": 360, "word": "one thousand", "zh": "一千"}, {"num": 361, "word": "second", "zh": "秒"}, {"num": 362, "word": "minute", "zh": "分鐘"}, {"num": 363, "word": "quarter", "zh": "一刻鐘／15分鐘"}, {"num": 364, "word": "half", "zh": "一半／30分鐘"}, {"num": 365, "word": "hour", "zh": "小時"}, {"num": 366, "word": "day", "zh": "天"}, {"num": 367, "word": "yesterday", "zh": "昨天"}, {"num": 368, "word": "today", "zh": "今天"}, {"num": 369, "word": "tomorrow", "zh": "明天"}, {"num": 370, "word": "week", "zh": "週"}, {"num": 371, "word": "weekend", "zh": "週末"}, {"num": 372, "word": "month", "zh": "月"}, {"num": 373, "word": "year", "zh": "年"}, {"num": 374, "word": "businessman", "zh": "商人"}, {"num": 375, "word": "chef", "zh": "主廚"}, {"num": 376, "word": "scientist", "zh": "科學家"}, {"num": 377, "word": "vet", "zh": "獸醫"}, {"num": 378, "word": "artist", "zh": "藝術家"}, {"num": 379, "word": "tour guide", "zh": "導遊"}, {"num": 380, "word": "astronaut", "zh": "太空人"}, {"num": 381, "word": "bicycle / bike", "zh": "腳踏車"}, {"num": 382, "word": "race car", "zh": "賽車"}, {"num": 383, "word": "taxi", "zh": "計程車"}, {"num": 384, "word": "boat", "zh": "船"}, {"num": 385, "word": "ship", "zh": "郵輪"}, {"num": 386, "word": "airplane / plane", "zh": "飛機"}, {"num": 387, "word": "school bus", "zh": "校車"}, {"num": 388, "word": "train", "zh": "火車"}, {"num": 389, "word": "MRT", "zh": "捷運"}, {"num": 390, "word": "subway", "zh": "地下鐵"}, {"num": 391, "word": "high-speed rail", "zh": "高鐵"}, {"num": 392, "word": "library", "zh": "圖書館"}, {"num": 393, "word": "bakery", "zh": "麵包店"}, {"num": 394, "word": "police station", "zh": "警察局"}, {"num": 395, "word": "bookstore", "zh": "書店"}, {"num": 396, "word": "coffee shop", "zh": "咖啡店"}, {"num": 397, "word": "supermarket", "zh": "超市"}, {"num": 398, "word": "post office", "zh": "郵局"}, {"num": 399, "word": "amusement park", "zh": "樂園"}, {"num": 400, "word": "museum", "zh": "博物館"}, {"num": 401, "word": "always", "zh": "總是"}, {"num": 402, "word": "usually", "zh": "經常"}, {"num": 403, "word": "often", "zh": "時常"}, {"num": 404, "word": "sometimes", "zh": "有時"}, {"num": 405, "word": "seldom", "zh": "偶爾"}, {"num": 406, "word": "rarely", "zh": "極少"}, {"num": 407, "word": "never", "zh": "從不"}, {"num": 408, "word": "math", "zh": "數學"}, {"num": 409, "word": "English", "zh": "英文"}, {"num": 410, "word": "science", "zh": "自然／化學"}, {"num": 411, "word": "music", "zh": "音樂"}, {"num": 412, "word": "art", "zh": "美術"}, {"num": 413, "word": "Chinese", "zh": "中文"}, {"num": 414, "word": "history", "zh": "歷史"}, {"num": 415, "word": "homework", "zh": "作業"}, {"num": 416, "word": "geography", "zh": "地理"}, {"num": 417, "word": "PE / physical education", "zh": "體育"}, {"num": 418, "word": "Literature", "zh": "文學"}, {"num": 419, "word": "social studies", "zh": "社會"}, {"num": 420, "word": "computer", "zh": "電腦"}, {"num": 421, "word": "boring", "zh": "無聊的"}, {"num": 422, "word": "busy", "zh": "忙碌的"}, {"num": 423, "word": "clean", "zh": "乾淨的"}, {"num": 424, "word": "dirty", "zh": "髒的"}, {"num": 425, "word": "crazy", "zh": "瘋狂的"}, {"num": 426, "word": "thirsty", "zh": "口渴的"}, {"num": 427, "word": "hungry", "zh": "飢餓的"}, {"num": 428, "word": "tired", "zh": "疲勞的"}, {"num": 429, "word": "scared", "zh": "恐懼的"}, {"num": 430, "word": "worried", "zh": "擔心的"}, {"num": 431, "word": "surprised", "zh": "驚訝的"}, {"num": 432, "word": "interested", "zh": "有興趣的"}, {"num": 433, "word": "excited", "zh": "興奮的"}, {"num": 434, "word": "bored", "zh": "無聊的"}, {"num": 435, "word": "embarrassed", "zh": "尷尬的"}, {"num": 436, "word": "fast", "zh": "快的"}, {"num": 437, "word": "slow", "zh": "慢的"}, {"num": 438, "word": "high", "zh": "高的"}, {"num": 439, "word": "low", "zh": "低的"}, {"num": 440, "word": "interesting", "zh": "有趣的"}, {"num": 441, "word": "up", "zh": "往上"}, {"num": 442, "word": "around", "zh": "圍繞著"}, {"num": 443, "word": "through", "zh": "穿過"}, {"num": 444, "word": "over", "zh": "越過"}, {"num": 445, "word": "down", "zh": "往下"}, {"num": 446, "word": "under", "zh": "從下方"}, {"num": 447, "word": "into", "zh": "進入"}, {"num": 448, "word": "out of", "zh": "出來"}, {"num": 449, "word": "right", "zh": "右"}, {"num": 450, "word": "left", "zh": "左邊"}, {"num": 451, "word": "mitt", "zh": "手套"}, {"num": 452, "word": "skateboard", "zh": "滑板"}, {"num": 453, "word": "helmet", "zh": "安全帽"}, {"num": 454, "word": "tennis ball", "zh": "網球"}, {"num": 455, "word": "tennis racket", "zh": "網球拍"}, {"num": 456, "word": "fishing rod", "zh": "釣魚竿"}, {"num": 457, "word": "bucket", "zh": "水桶"}, {"num": 458, "word": "towel", "zh": "毛巾"}, {"num": 459, "word": "swimsuit", "zh": "泳衣"}, {"num": 460, "word": "tent", "zh": "帳篷"}, {"num": 461, "word": "flashlight", "zh": "手電筒"}, {"num": 462, "word": "sleeping bag", "zh": "睡袋"}, {"num": 463, "word": "sunglasses", "zh": "墨鏡"}, {"num": 464, "word": "sunscreen", "zh": "防曬乳"}, {"num": 465, "word": "surfboard", "zh": "衝浪板"}, {"num": 466, "word": "strong", "zh": "強壯的"}, {"num": 467, "word": "weak", "zh": "虛弱的"}, {"num": 468, "word": "sweet", "zh": "甜的"}, {"num": 469, "word": "bitter", "zh": "苦的"}, {"num": 470, "word": "wet", "zh": "濕的"}, {"num": 471, "word": "wonderful", "zh": "美妙的"}, {"num": 472, "word": "terrible", "zh": "糟糕的"}, {"num": 473, "word": "right", "zh": "對的"}, {"num": 474, "word": "wrong", "zh": "錯的"}, {"num": 475, "word": "dry", "zh": "乾的"}, {"num": 476, "word": "beef", "zh": "牛肉"}, {"num": 477, "word": "bread", "zh": "麵包"}, {"num": 478, "word": "butter", "zh": "奶油"}, {"num": 479, "word": "meat", "zh": "肉"}, {"num": 480, "word": "pepper", "zh": "胡椒粉"}, {"num": 481, "word": "pork", "zh": "豬肉"}, {"num": 482, "word": "salt", "zh": "鹽"}, {"num": 483, "word": "snack", "zh": "零食／點心"}, {"num": 484, "word": "sugar", "zh": "糖"}, {"num": 485, "word": "vegetable", "zh": "蔬菜"}, {"num": 486, "word": "airport", "zh": "機場"}, {"num": 487, "word": "bank", "zh": "銀行"}, {"num": 488, "word": "beach", "zh": "海灘"}, {"num": 489, "word": "building", "zh": "建築物"}, {"num": 490, "word": "city", "zh": "城市"}, {"num": 491, "word": "country", "zh": "鄉村／國家"}, {"num": 492, "word": "farm", "zh": "農場"}, {"num": 493, "word": "fire station", "zh": "消防局"}, {"num": 494, "word": "forest", "zh": "森林"}, {"num": 495, "word": "garden", "zh": "花園"}, {"num": 496, "word": "lake", "zh": "湖"}, {"num": 497, "word": "mountain", "zh": "山"}, {"num": 498, "word": "park", "zh": "公園"}, {"num": 499, "word": "river", "zh": "河"}, {"num": 500, "word": "sea", "zh": "海"}, {"num": 701, "word": "American", "zh": "美國人"}, {"num": 702, "word": "Taiwanese", "zh": "台灣人"}, {"num": 703, "word": "Chinese", "zh": "中國人"}, {"num": 704, "word": "British", "zh": "英國人"}, {"num": 705, "word": "Canadian", "zh": "加拿大人"}, {"num": 706, "word": "Australian", "zh": "澳洲人"}, {"num": 707, "word": "Japanese", "zh": "日本人"}, {"num": 708, "word": "Korean", "zh": "韓國人"}, {"num": 709, "word": "Vietnamese", "zh": "越南人"}, {"num": 710, "word": "act", "zh": "行動"}, {"num": 711, "word": "bake", "zh": "烘焙"}, {"num": 712, "word": "attack", "zh": "攻擊"}, {"num": 713, "word": "cheer", "zh": "歡呼"}, {"num": 714, "word": "win", "zh": "獲勝"}, {"num": 715, "word": "live", "zh": "活著"}, {"num": 716, "word": "divide", "zh": "劃分"}, {"num": 717, "word": "despise", "zh": "鄙視"}, {"num": 718, "word": "invite", "zh": "邀請"}, {"num": 719, "word": "wait", "zh": "等待"}, {"num": 720, "word": "race", "zh": "比賽"}, {"num": 721, "word": "surf", "zh": "衝浪"}, {"num": 722, "word": "hunt", "zh": "打獵"}, {"num": 723, "word": "surf the net", "zh": "上網"}, {"num": 724, "word": "compare", "zh": "比較"}, {"num": 725, "word": "comfort", "zh": "安慰"}, {"num": 726, "word": "foggy", "zh": "起霧的"}, {"num": 727, "word": "stormy", "zh": "暴風雨的"}, {"num": 728, "word": "shower", "zh": "陣雨"}, {"num": 729, "word": "typhoon", "zh": "颱風"}, {"num": 730, "word": "hurricane", "zh": "颶風"}, {"num": 731, "word": "thunder", "zh": "雷"}, {"num": 732, "word": "lightning", "zh": "閃電"}, {"num": 733, "word": "depressed", "zh": "沮喪的"}, {"num": 734, "word": "lonely", "zh": "寂寞的"}, {"num": 735, "word": "shy", "zh": "害羞的"}, {"num": 736, "word": "wise", "zh": "有智慧的"}, {"num": 737, "word": "excellent", "zh": "傑出的"}, {"num": 738, "word": "successful", "zh": "成功的"}, {"num": 739, "word": "nice", "zh": "好的／好心的"}, {"num": 740, "word": "kind", "zh": "好心／善良的"}, {"num": 741, "word": "honest", "zh": "誠實的"}, {"num": 742, "word": "hard-working", "zh": "努力的"}, {"num": 743, "word": "favorite", "zh": "最喜歡的"}, {"num": 744, "word": "busy", "zh": "忙碌的"}, {"num": 745, "word": "lucky", "zh": "幸運的"}, {"num": 746, "word": "careful", "zh": "小心的"}, {"num": 747, "word": "humorous", "zh": "幽默的"}, {"num": 748, "word": "difficult", "zh": "困難的"}, {"num": 749, "word": "tidy", "zh": "整潔的"}, {"num": 750, "word": "useful", "zh": "有用的"}, {"num": 751, "word": "proud", "zh": "自豪的"}, {"num": 752, "word": "lazy", "zh": "懶惰的"}, {"num": 753, "word": "dangerous", "zh": "危險的"}, {"num": 754, "word": "messy", "zh": "髒亂的"}, {"num": 755, "word": "useless", "zh": "沒用的"}, {"num": 756, "word": "sound", "zh": "聽起來"}, {"num": 757, "word": "grin", "zh": "露齒笑"}, {"num": 758, "word": "disagree", "zh": "不同意"}, {"num": 759, "word": "bear", "zh": "忍受"}, {"num": 760, "word": "abuse", "zh": "辱罵"}, {"num": 761, "word": "praise", "zh": "讚美"}, {"num": 762, "word": "knowledge", "zh": "知識"}, {"num": 763, "word": "fact", "zh": "事實"}, {"num": 764, "word": "dissatisfy", "zh": "不滿意"}, {"num": 765, "word": "practice", "zh": "練習"}, {"num": 766, "word": "experience", "zh": "經驗"}, {"num": 767, "word": "example", "zh": "例子"}, {"num": 768, "word": "mistake", "zh": "錯誤"}, {"num": 769, "word": "subject", "zh": "科目"}, {"num": 770, "word": "language", "zh": "語言"}, {"num": 771, "word": "straight", "zh": "直的"}, {"num": 772, "word": "million", "zh": "百萬"}, {"num": 773, "word": "money", "zh": "錢"}, {"num": 774, "word": "dollar", "zh": "元"}, {"num": 775, "word": "total", "zh": "總數"}, {"num": 776, "word": "skinny", "zh": "骨瘦如柴的"}, {"num": 777, "word": "slender", "zh": "修長的"}, {"num": 778, "word": "slim", "zh": "苗條的"}, {"num": 779, "word": "active", "zh": "活潑的"}, {"num": 780, "word": "careless", "zh": "粗心大意的"}, {"num": 781, "word": "childish", "zh": "幼稚的"}, {"num": 782, "word": "childlike", "zh": "天真的"}, {"num": 783, "word": "confident", "zh": "有自信的"}, {"num": 784, "word": "considerate", "zh": "體貼的／考慮到"}, {"num": 785, "word": "cruel", "zh": "殘酷的"}, {"num": 786, "word": "curious", "zh": "好奇的"}, {"num": 787, "word": "diligent", "zh": "勤奮的"}, {"num": 788, "word": "dishonest", "zh": "不誠實的"}, {"num": 789, "word": "evil", "zh": "邪惡的"}, {"num": 790, "word": "energetic", "zh": "精力旺盛的"}, {"num": 791, "word": "famous", "zh": "有名的"}, {"num": 792, "word": "foolish", "zh": "愚蠢的"}, {"num": 793, "word": "polite", "zh": "有禮貌的"}, {"num": 794, "word": "gentle", "zh": "文雅的"}, {"num": 795, "word": "generous", "zh": "慷慨的"}, {"num": 796, "word": "greedy", "zh": "貪心的"}, {"num": 797, "word": "mean", "zh": "壞心的"}, {"num": 798, "word": "jealous", "zh": "忌妒的"}, {"num": 799, "word": "humorous", "zh": "幽默的"}, {"num": 800, "word": "impolite", "zh": "沒禮貌的"}];
+let stopRequested=false,currentIndex=-1;
+
+function render(){
+  const box=document.getElementById("content");
+  box.innerHTML="";
+  let lastGroup="";
+  WORDS.forEach((x,i)=>{
+    const group=x.num<=500?"301–500":"701–800";
+    if(group!==lastGroup){
+      if(group==="701–800"){
+        const gap=document.createElement("div");
+        gap.className="gap-note";
+        gap.textContent="501–700 目前尚未加入單字。";
+        box.appendChild(gap);
+      }
+      const h=document.createElement("div");
+      h.className="section";
+      h.textContent=group;
+      box.appendChild(h);
+      lastGroup=group;
+    }
+    const row=document.createElement("div");
+    row.className="item";
+    row.id=`item-${i}`;
+    row.innerHTML=`<div class="num">${x.num}</div><div class="word">${x.word}</div><div class="zh">${x.zh}</div><button onclick="playOne(${i})">🔊</button>`;
+    box.appendChild(row);
+  });
+}
+
+function getVoice(){
+  const v=speechSynthesis.getVoices();
+  return v.find(x=>/^en-US/i.test(x.lang))||v.find(x=>/^en-GB/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null;
+}
+function spokenText(t){return t.replace(/\s*\/\s*/g,", ")}
+function speak(t){
+  return new Promise(done=>{
+    const u=new SpeechSynthesisUtterance(spokenText(t));
+    const v=getVoice();
+    if(v)u.voice=v;
+    u.lang=v?v.lang:"en-US";
+    u.rate=parseFloat(document.getElementById("rate").value);
+    u.pitch=1;
+    u.onend=done;u.onerror=done;
+    speechSynthesis.speak(u);
+  });
+}
+function clearH(){document.querySelectorAll(".item").forEach(x=>x.classList.remove("playing"))}
+function hi(i){
+  clearH();
+  const e=document.getElementById(`item-${i}`);
+  if(e){e.classList.add("playing");e.scrollIntoView({behavior:"smooth",block:"center"})}
+}
+function findIndexByNum(n){return WORDS.findIndex(x=>x.num===n)}
+
+async function playOne(i){
+  stopRequested=false;
+  speechSynthesis.cancel();
+  await new Promise(r=>setTimeout(r,70));
+  currentIndex=i;hi(i);
+  document.getElementById("startNum").value=WORDS[i].num;
+  document.getElementById("status").textContent=`正在播放第 ${WORDS[i].num} 個：${WORDS[i].word}`;
+  await speak(WORDS[i].word);
+  clearH();
+  document.getElementById("status").textContent=`已播放第 ${WORDS[i].num} 個：${WORDS[i].word}`;
+}
+
+async function playFromStart(){
+  const n=parseInt(document.getElementById("startNum").value||"301",10);
+  const start=findIndexByNum(n);
+  if(start<0){
+    document.getElementById("status").textContent=
+      (n>=501&&n<=700)?"501–700 目前尚未加入單字。":"找不到這個編號，請輸入目前已有的編號。";
+    return;
+  }
+  stopRequested=false;
+  speechSynthesis.cancel();
+  await new Promise(r=>setTimeout(r,80));
+  for(let i=start;i<WORDS.length;i++){
+    if(stopRequested)break;
+    currentIndex=i;
+    document.getElementById("startNum").value=WORDS[i].num;
+    hi(i);
+    document.getElementById("status").textContent=`正在播放第 ${WORDS[i].num} 個：${WORDS[i].word}`;
+    await speak(WORDS[i].word);
+    if(stopRequested)break;
+    await new Promise(r=>setTimeout(r,450));
+  }
+  clearH();
+  document.getElementById("status").textContent=
+    stopRequested?`已停止在第 ${WORDS[currentIndex].num} 個：${WORDS[currentIndex].word}`:"全部播放完成。";
+}
+function stopSpeaking(){
+  stopRequested=true;speechSynthesis.cancel();clearH();
+  if(currentIndex>=0)document.getElementById("startNum").value=WORDS[currentIndex].num;
+}
+function restart(){
+  stopSpeaking();currentIndex=-1;
+  document.getElementById("startNum").value=301;
+  document.getElementById("status").textContent="已回到第 301 個。";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+render();
+speechSynthesis.onvoiceschanged=()=>{};
+</script>
+</body></html>
