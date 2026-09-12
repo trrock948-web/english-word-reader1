@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英文單字朗讀練習 401–500</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f6fa;color:#1f2937;font-family:Arial,"Noto Sans TC",sans-serif}
+.wrap{max-width:920px;margin:30px auto;padding:0 18px 48px}.panel{background:#fff;border-radius:18px;padding:24px;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+h1{margin:0 0 8px;font-size:30px}.sub{color:#64748b;margin-bottom:18px}.controls{position:sticky;top:0;z-index:5;background:#fff;padding:14px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb}
+select,input{padding:9px 10px;font-size:16px;border:1px solid #cbd5e1;border-radius:9px}input[type=number]{width:92px}
+button{border:0;border-radius:10px;padding:10px 15px;font-size:15px;cursor:pointer;background:#111827;color:white}
+button.secondary{background:#475569}button.light{background:#e2e8f0;color:#111827}
+.status{margin:14px 0;padding:11px 13px;background:#f1f5f9;border-radius:10px;color:#334155}
+.list{display:grid;gap:8px}.item{border:1px solid #e2e8f0;border-radius:12px;padding:13px 15px;display:grid;grid-template-columns:70px 1.2fr 1.4fr auto;align-items:center;gap:10px}
+.num{color:#64748b;font-weight:700}.word{font-size:21px;font-weight:700}.zh{font-size:16px;color:#475569}.item.playing{outline:3px solid #94a3b8;background:#f8fafc}
+@media(max-width:650px){.item{grid-template-columns:58px 1fr auto}.zh{grid-column:2/4}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="panel">
+<h1>英文單字朗讀練習 401–500</h1>
+<div class="sub">固定單字列表｜不需輸入單字</div>
+<div class="controls">
+<label>從第 <input id="startIndex" type="number" min="401" max="500" value="401"> 個開始</label>
+<label>速度 <select id="rate">
+<option value="0.25" selected>🐢 超級慢（0.25x）</option>
+<option value="0.6">很慢（0.6x）</option>
+<option value="0.75">慢（0.75x）</option>
+<option value="0.9">正常偏慢（0.9x）</option>
+<option value="1">正常（1.0x）</option>
+</select></label>
+<button onclick="playFromStart()">▶ 開始播放</button>
+<button class="secondary" onclick="stopSpeaking()">⏹ 停止</button>
+<button class="light" onclick="restart()">↺ 回到 401</button>
+</div>
+<div id="status" class="status">共 100 個單字，尚未播放。</div>
+<div id="list" class="list"></div>
+</div></div>
+<script>
+const WORDS = [{"num": 401, "word": "always", "zh": "總是"}, {"num": 402, "word": "usually", "zh": "經常"}, {"num": 403, "word": "often", "zh": "時常"}, {"num": 404, "word": "sometimes", "zh": "有時"}, {"num": 405, "word": "seldom", "zh": "偶爾"}, {"num": 406, "word": "rarely", "zh": "極少"}, {"num": 407, "word": "never", "zh": "從不"}, {"num": 408, "word": "math", "zh": "數學"}, {"num": 409, "word": "English", "zh": "英文"}, {"num": 410, "word": "science", "zh": "自然／化學"}, {"num": 411, "word": "music", "zh": "音樂"}, {"num": 412, "word": "art", "zh": "美術"}, {"num": 413, "word": "Chinese", "zh": "中文"}, {"num": 414, "word": "history", "zh": "歷史"}, {"num": 415, "word": "homework", "zh": "作業"}, {"num": 416, "word": "geography", "zh": "地理"}, {"num": 417, "word": "PE / physical education", "zh": "體育"}, {"num": 418, "word": "Literature", "zh": "文學"}, {"num": 419, "word": "social studies", "zh": "社會"}, {"num": 420, "word": "computer", "zh": "電腦"}, {"num": 421, "word": "boring", "zh": "無聊的"}, {"num": 422, "word": "busy", "zh": "忙碌的"}, {"num": 423, "word": "clean", "zh": "乾淨的"}, {"num": 424, "word": "dirty", "zh": "髒的"}, {"num": 425, "word": "crazy", "zh": "瘋狂的"}, {"num": 426, "word": "thirsty", "zh": "口渴的"}, {"num": 427, "word": "hungry", "zh": "飢餓的"}, {"num": 428, "word": "tired", "zh": "疲勞的"}, {"num": 429, "word": "scared", "zh": "恐懼的"}, {"num": 430, "word": "worried", "zh": "擔心的"}, {"num": 431, "word": "surprised", "zh": "驚訝的"}, {"num": 432, "word": "interested", "zh": "有興趣的"}, {"num": 433, "word": "excited", "zh": "興奮的"}, {"num": 434, "word": "bored", "zh": "無聊的"}, {"num": 435, "word": "embarrassed", "zh": "尷尬的"}, {"num": 436, "word": "fast", "zh": "快的"}, {"num": 437, "word": "slow", "zh": "慢的"}, {"num": 438, "word": "high", "zh": "高的"}, {"num": 439, "word": "low", "zh": "低的"}, {"num": 440, "word": "interesting", "zh": "有趣的"}, {"num": 441, "word": "up", "zh": "往上"}, {"num": 442, "word": "around", "zh": "圍繞著"}, {"num": 443, "word": "through", "zh": "穿過"}, {"num": 444, "word": "over", "zh": "越過"}, {"num": 445, "word": "down", "zh": "往下"}, {"num": 446, "word": "under", "zh": "從下方"}, {"num": 447, "word": "into", "zh": "進入"}, {"num": 448, "word": "out of", "zh": "出來"}, {"num": 449, "word": "right", "zh": "右"}, {"num": 450, "word": "left", "zh": "左邊"}, {"num": 451, "word": "mitt", "zh": "手套"}, {"num": 452, "word": "skateboard", "zh": "滑板"}, {"num": 453, "word": "helmet", "zh": "安全帽"}, {"num": 454, "word": "tennis ball", "zh": "網球"}, {"num": 455, "word": "tennis racket", "zh": "網球拍"}, {"num": 456, "word": "fishing rod", "zh": "釣魚竿"}, {"num": 457, "word": "bucket", "zh": "水桶"}, {"num": 458, "word": "towel", "zh": "毛巾"}, {"num": 459, "word": "swimsuit", "zh": "泳衣"}, {"num": 460, "word": "tent", "zh": "帳篷"}, {"num": 461, "word": "flashlight", "zh": "手電筒"}, {"num": 462, "word": "sleeping bag", "zh": "睡袋"}, {"num": 463, "word": "sunglasses", "zh": "墨鏡"}, {"num": 464, "word": "sunscreen", "zh": "防曬乳"}, {"num": 465, "word": "surfboard", "zh": "衝浪板"}, {"num": 466, "word": "strong", "zh": "強壯的"}, {"num": 467, "word": "weak", "zh": "虛弱的"}, {"num": 468, "word": "sweet", "zh": "甜的"}, {"num": 469, "word": "bitter", "zh": "苦的"}, {"num": 470, "word": "wet", "zh": "濕的"}, {"num": 471, "word": "wonderful", "zh": "美妙的"}, {"num": 472, "word": "terrible", "zh": "糟糕的"}, {"num": 473, "word": "right", "zh": "對的"}, {"num": 474, "word": "wrong", "zh": "錯的"}, {"num": 475, "word": "dry", "zh": "乾的"}, {"num": 476, "word": "beef", "zh": "牛肉"}, {"num": 477, "word": "bread", "zh": "麵包"}, {"num": 478, "word": "butter", "zh": "奶油"}, {"num": 479, "word": "meat", "zh": "肉"}, {"num": 480, "word": "pepper", "zh": "胡椒粉"}, {"num": 481, "word": "pork", "zh": "豬肉"}, {"num": 482, "word": "salt", "zh": "鹽"}, {"num": 483, "word": "snack", "zh": "零食／點心"}, {"num": 484, "word": "sugar", "zh": "糖"}, {"num": 485, "word": "vegetable", "zh": "蔬菜"}, {"num": 486, "word": "airport", "zh": "機場"}, {"num": 487, "word": "bank", "zh": "銀行"}, {"num": 488, "word": "beach", "zh": "海灘"}, {"num": 489, "word": "building", "zh": "建築物"}, {"num": 490, "word": "city", "zh": "城市"}, {"num": 491, "word": "country", "zh": "鄉村／國家"}, {"num": 492, "word": "farm", "zh": "農場"}, {"num": 493, "word": "fire station", "zh": "消防局"}, {"num": 494, "word": "forest", "zh": "森林"}, {"num": 495, "word": "garden", "zh": "花園"}, {"num": 496, "word": "lake", "zh": "湖"}, {"num": 497, "word": "mountain", "zh": "山"}, {"num": 498, "word": "park", "zh": "公園"}, {"num": 499, "word": "river", "zh": "河"}, {"num": 500, "word": "sea", "zh": "海"}];
+let stopRequested=false,currentIndex=-1;
+function renderList(){const list=document.getElementById("list");list.innerHTML="";WORDS.forEach((item,i)=>{const row=document.createElement("div");row.className="item";row.id=`item-${i}`;row.innerHTML=`<div class="num">${item.num}</div><div class="word">${item.word}</div><div class="zh">${item.zh}</div><button onclick="playOne(${i})">🔊</button>`;list.appendChild(row);});}
+function getVoice(){const v=speechSynthesis.getVoices();return v.find(x=>/^en-US/i.test(x.lang))||v.find(x=>/^en-GB/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null}
+function speak(text){return new Promise(resolve=>{const u=new SpeechSynthesisUtterance(text);const v=getVoice();if(v)u.voice=v;u.lang=v?v.lang:"en-US";u.rate=parseFloat(document.getElementById("rate").value);u.pitch=1;u.onend=resolve;u.onerror=resolve;speechSynthesis.speak(u);});}
+function clearHighlight(){document.querySelectorAll(".item").forEach(x=>x.classList.remove("playing"))}
+function highlight(i){clearHighlight();const el=document.getElementById(`item-${i}`);if(el){el.classList.add("playing");el.scrollIntoView({behavior:"smooth",block:"center"});}}
+async function playOne(i){stopRequested=false;speechSynthesis.cancel();await new Promise(r=>setTimeout(r,70));currentIndex=i;highlight(i);document.getElementById("startIndex").value=WORDS[i].num;document.getElementById("status").textContent=`正在播放第 ${WORDS[i].num} 個：${WORDS[i].word}`;await speak(WORDS[i].word);clearHighlight();document.getElementById("status").textContent=`已播放第 ${WORDS[i].num} 個：${WORDS[i].word}`;}
+async function playFromStart(){let startNum=parseInt(document.getElementById("startIndex").value||"401",10);if(startNum<401)startNum=401;if(startNum>500)startNum=500;let start=startNum-401;stopRequested=false;speechSynthesis.cancel();await new Promise(r=>setTimeout(r,80));for(let i=start;i<WORDS.length;i++){if(stopRequested)break;currentIndex=i;document.getElementById("startIndex").value=WORDS[i].num;highlight(i);document.getElementById("status").textContent=`正在播放第 ${WORDS[i].num} 個：${WORDS[i].word}`;await speak(WORDS[i].word);if(stopRequested)break;await new Promise(r=>setTimeout(r,450));}clearHighlight();document.getElementById("status").textContent=stopRequested?`已停止在第 ${WORDS[currentIndex].num} 個：${WORDS[currentIndex].word}`:"401–500 全部播放完成。";}
+function stopSpeaking(){stopRequested=true;speechSynthesis.cancel();clearHighlight();if(currentIndex>=0)document.getElementById("startIndex").value=WORDS[currentIndex].num}
+function restart(){stopSpeaking();currentIndex=-1;document.getElementById("startIndex").value=401;document.getElementById("status").textContent="已回到第 401 個。";window.scrollTo({top:0,behavior:"smooth"})}
+renderList();speechSynthesis.onvoiceschanged=()=>{};
+</script>
+</body></html>
